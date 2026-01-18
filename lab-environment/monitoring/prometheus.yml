@@ -1,0 +1,32 @@
+# 全局配置
+global:
+  # 定义默认的抓取间隔。Prometheus 每隔 5 秒会去目标拉取一次数据。
+  # 在DDoS模拟中，一个较短的间隔可以让我们更快地看到攻击效果。
+  scrape_interval: 5s 
+  # 定义评估规则的间隔。
+  evaluation_interval: 15s
+
+# 抓取配置 (Scrape Configurations)
+# 这里定义了 Prometheus 需要监控的所有目标。
+scrape_configs:
+  # 第一个抓取任务：监控 Prometheus 自己
+  # 这对于确认 Prometheus 是否正常工作很有用。
+  - job_name: 'prometheus'
+    # Prometheus 默认在自己的 /metrics 路径下暴露指标。
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 第二个抓取任务：监控我们的 Nginx 靶机
+  - job_name: 'nginx-target'
+    # 定义抓取间隔，可以覆盖全局设置
+    scrape_interval: 5s
+    # 定义静态目标列表
+    static_configs:
+      # 'targets' 列表包含了所有要抓取的目标地址。
+      # 我们指向 target-exporter 服务的默认端口 9113。
+      # 'target-exporter' 是我们在 docker-compose.yml 中定义的服务名。
+      - targets: ['target-exporter:9113']
+        # 我们可以为这个目标添加标签，方便在 Grafana 中查询和筛选。
+        labels:
+          instance: 'Target_Nginx_Server'
+
