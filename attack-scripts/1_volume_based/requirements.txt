@@ -1,0 +1,3 @@
+# "scapy" is required by dns_amplify.py for crafting custom IP packets.
+scapy
+
