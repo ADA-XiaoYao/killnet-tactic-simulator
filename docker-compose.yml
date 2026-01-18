@@ -1,0 +1,68 @@
+# Docker Compose 版本定义
+version: '3.8'
+
+# 定义所有服务
+services:
+  # 1. 攻击机服务 (attacker)
+  # 这是我们将进入并从中发起攻击的容器。
+  attacker:
+    # 使用 lab-environment/attacker/Dockerfile 进行构建
+    build: ./lab-environment/attacker
+    container_name: attacker
+    # 保持终端开启，以便我们可以交互式地使用它
+    tty: true
+    stdin_open: true
+    # 将本地的 attack-scripts 目录挂载到容器的 /scripts 目录
+    # 这样我们修改本地脚本时，容器内会立即同步，无需重新构建
+    volumes:
+      - ./attack-scripts:/scripts
+    # 将此服务连接到我们定义的 lab_net 网络
+    networks:
+      lab_net:
+        # 为攻击机分配一个固定的IP地址，便于识别
+        ipv4_address: 172.20.0.10
+
+  # 2. 靶机服务 (target)
+  # 这是我们攻击的目标，一个简单的Nginx Web服务器。
+  target:
+    build: ./lab-environment/target
+    container_name: target
+    networks:
+      lab_net:
+        ipv4_address: 172.20.0.30
+
+  # 3. 监控数据采集服务 (prometheus)
+  # 它会定期从靶机等服务拉取指标数据（如CPU、内存、网络流量）。
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    # 挂载配置文件
+    volumes:
+      - ./lab-environment/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    # 将容器的9090端口映射到主机的9090端口，以便我们访问其Web界面
+    ports:
+      - "9090:9090"
+    networks:
+      lab_net:
+        ipv4_address: 172.20.0.40
+
+  # 4. 可视化仪表盘服务 (grafana)
+  # 它连接到Prometheus，将采集到的数据以图表形式美观地展示出来。
+  grafana:
+    build: ./lab-environment/monitoring/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      lab_net:
+        ipv4_address: 172.20.0.50
+
+# 定义网络
+networks:
+  # 创建一个名为 lab_net 的自定义桥接网络
+  lab_net:
+    driver: bridge
+    # 定义网络的IP地址范围
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
