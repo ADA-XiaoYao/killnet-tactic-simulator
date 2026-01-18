@@ -1,0 +1,2 @@
+# "aiohttp" is required by http_flood.py for high-performance asynchronous HTTP requests.
+aiohttp
