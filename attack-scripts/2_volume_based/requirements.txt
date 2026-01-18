@@ -1,0 +1,3 @@
+# "scapy" is required by syn_flood.py for crafting custom TCP/IP packets.
+scapy
+
